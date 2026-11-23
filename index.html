@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PCAssembly - CPU Replacement Simulator</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="top-navbar">
+      <a href="#start" id="brand-home-link" class="brand-title">PCAssembly</a>
+
+      <nav class="nav-links">
+        <button type="button" class="nav-link active" id="nav-start-btn">Setup</button>
+        <button type="button" class="nav-link" id="nav-sim-btn">Simulator</button>
+        <button type="button" class="nav-link" id="nav-results-btn">Results</button>
+      </nav>
+
+      <div class="navbar-actions">
+        <button type="button" class="btn btn-primary" id="top-export-csv-btn">
+          Export CSV
+        </button>
+      </div>
+    </header>
+
+    <main class="main-container">
+
+
+      <!-- start -->
+      <section id="start-screen" class="screen active">
+        <div class="start-grid">
+          <div class="panel-card">
+            <h2 class="panel-heading">Setup</h2>
+            <p class="panel-subtitle">Choose a mode</p>
+
+            <div class="form-field">
+              <span class="form-label" id="mode-label">Mode</span>
+              <div class="segmented-group">
+                <button type="button" class="segment-btn active" data-mode="ar_overlay">
+                  AR Overlay
+                </button>
+                <button type="button" class="segment-btn" data-mode="written_manual">
+                  Manual
+                </button>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label class="checkbox-row" for="secondary-task-checkbox">
+                <input type="checkbox" id="secondary-task-checkbox" checked />
+                <span>Coolant mini-game</span>
+              </label>
+            </div>
+
+            <div class="start-actions">
+              <button type="button" class="btn btn-secondary" id="reset-config-btn">
+                Reset
+              </button>
+              <button type="button" class="btn btn-primary" id="run-sim-btn">
+                Start
+              </button>
+            </div>
+          </div>
+
+          <!-- cpu drawing -->
+          <div class="cpu-hero-stage">
+            <div>
+              <h1 id="start-screen-heading" class="cpu-hero-title">
+                CPU Swapper
+              </h1>
+              <div class="metadata-line">
+                <span id="hero-summary-condition">Mode: AR Overlay</span>
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="button"
+                id="cpu-icon-launch-btn"
+                class="cpu-icon-button"
+                title="Click CPU icon to start"
+              >
+                <svg width="190" height="190" viewBox="0 0 190 190">
+                  <defs>
+                    <linearGradient id="pcb-grad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#0f5132" />
+                      <stop offset="100%" stop-color="#063722" />
+                    </linearGradient>
+                    <linearGradient id="ihs-metal" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#e2e8f0" />
+                      <stop offset="50%" stop-color="#94a3b8" />
+                      <stop offset="100%" stop-color="#cbd5e1" />
+                    </linearGradient>
+                  </defs>
+
+                  <!-- gold pads around cpu -->
+                  <g fill="#eab308" opacity="0.85">
+                    <rect x="44" y="14" width="6" height="10" rx="1" />
+                    <rect x="58" y="14" width="6" height="10" rx="1" />
+                    <rect x="72" y="14" width="6" height="10" rx="1" />
+                    <rect x="86" y="14" width="6" height="10" rx="1" />
+                    <rect x="100" y="14" width="6" height="10" rx="1" />
+                    <rect x="114" y="14" width="6" height="10" rx="1" />
+                    <rect x="128" y="14" width="6" height="10" rx="1" />
+                    <rect x="140" y="14" width="6" height="10" rx="1" />
+
+                    <rect x="44" y="166" width="6" height="10" rx="1" />
+                    <rect x="58" y="166" width="6" height="10" rx="1" />
+                    <rect x="72" y="166" width="6" height="10" rx="1" />
+                    <rect x="86" y="166" width="6" height="10" rx="1" />
+                    <rect x="100" y="166" width="6" height="10" rx="1" />
+                    <rect x="114" y="166" width="6" height="10" rx="1" />
+                    <rect x="128" y="166" width="6" height="10" rx="1" />
+                    <rect x="140" y="166" width="6" height="10" rx="1" />
+
+                    <rect x="14" y="44" width="10" height="6" rx="1" />
+                    <rect x="14" y="58" width="10" height="6" rx="1" />
+                    <rect x="14" y="72" width="10" height="6" rx="1" />
+                    <rect x="14" y="86" width="10" height="6" rx="1" />
+                    <rect x="14" y="100" width="10" height="6" rx="1" />
+                    <rect x="14" y="114" width="10" height="6" rx="1" />
+                    <rect x="14" y="128" width="10" height="6" rx="1" />
+                    <rect x="14" y="140" width="10" height="6" rx="1" />
+
+                    <rect x="166" y="44" width="10" height="6" rx="1" />
+                    <rect x="166" y="58" width="10" height="6" rx="1" />
+                    <rect x="166" y="72" width="10" height="6" rx="1" />
+                    <rect x="166" y="86" width="10" height="6" rx="1" />
+                    <rect x="166" y="100" width="10" height="6" rx="1" />
+                    <rect x="166" y="114" width="10" height="6" rx="1" />
+                    <rect x="166" y="128" width="10" height="6" rx="1" />
+                    <rect x="166" y="140" width="10" height="6" rx="1" />
+                  </g>
+
+                  <!-- green board -->
+                  <rect
+                    x="26"
+                    y="26"
+                    width="138"
+                    height="138"
+                    rx="8"
+                    fill="url(#pcb-grad)"
+                    stroke="#38bdf8"
+                    stroke-width="2.5"
+                  />
+                  <circle cx="26" cy="75" r="5" fill="#0e1836" />
+                  <circle cx="164" cy="75" r="5" fill="#0e1836" />
+
+                  <g fill="#d97706" stroke="#fef08a" stroke-width="0.6">
+                    <rect x="52" y="32" width="8" height="4" />
+                    <rect x="66" y="32" width="8" height="4" />
+                    <rect x="116" y="32" width="8" height="4" />
+                    <rect x="130" y="32" width="8" height="4" />
+                    <rect x="52" y="154" width="8" height="4" />
+                    <rect x="66" y="154" width="8" height="4" />
+                    <rect x="116" y="154" width="8" height="4" />
+                    <rect x="130" y="154" width="8" height="4" />
+                  </g>
+
+                  <!-- metal top -->
+                  <path
+                    d="M 48 42 H 142 V 62 H 148 V 128 H 142 V 148 H 48 V 128 H 42 V 62 H 48 Z"
+                    fill="url(#ihs-metal)"
+                    stroke="#475569"
+                    stroke-width="2"
+                  />
+                  <rect
+                    x="54"
+                    y="50"
+                    width="82"
+                    height="90"
+                    rx="4"
+                    fill="none"
+                    stroke="#64748b"
+                    stroke-width="1"
+                  />
+
+                  <polygon points="32,158 46,158 32,144" fill="#eab308" />
+
+                  <text
+                    x="95"
+                    y="86"
+                    text-anchor="middle"
+                    font-family="Consolas, monospace"
+                    font-size="16"
+                    font-weight="700"
+                    fill="#0f172a"
+                  >
+                    CORE CPU
+                  </text>
+                  <text
+                    x="95"
+                    y="106"
+                    text-anchor="middle"
+                    font-family="Consolas, monospace"
+                    font-size="11"
+                    font-weight="600"
+                    fill="#1e293b"
+                    id="cpu-chip-subtext"
+                  >
+                    LGA 1700
+                  </text>
+                  <text
+                    x="95"
+                    y="124"
+                    text-anchor="middle"
+                    font-family="Consolas, monospace"
+                    font-size="8.5"
+                    fill="#334155"
+                  >
+                    5.10GHZ
+                  </text>
+                </svg>
+                <div class="cpu-icon-caption">
+                  Click to start
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- sim -->
+      <section id="assembly-screen" class="screen">
+        <div id="hazard-banner" class="hazard-banner">
+          <div>
+            <div class="hazard-title" id="hazard-title-text">
+              WARNING!
+            </div>
+            <div class="hazard-desc" id="hazard-desc-text">
+              Wait! Click OK before touching anything
+            </div>
+          </div>
+          <button type="button" class="btn btn-danger" id="acknowledge-hazard-btn">
+            OK, got it
+          </button>
+        </div>
+
+        <div class="assembly-layout">
+          <!-- left side: motherboard -->
+          <div class="panel-card">
+            <div class="stage-header-bar">
+              <div>
+                <h2 id="assembly-step-heading" class="panel-heading">
+                  Step 1 of 14: Turn off PSU
+                </h2>
+                <div class="metadata-line" style="justify-content: flex-start;">
+                  <span id="sim-condition-label">Mode: AR Overlay</span>
+                  <span>·</span>
+                  <span id="sim-cpu-label">CPU: i5-13600K</span>
+                  <span>·</span>
+                  <span id="sim-status-label">● ACTIVE</span>
+                </div>
+              </div>
+
+              <div class="stage-metrics-strip tabular-nums">
+                <span>Time: <strong id="live-timer">0.0s</strong></span>
+                <span>·</span>
+                <span>Errors: <strong id="live-errors">0</strong></span>
+                <span>·</span>
+                <span>Pauses: <strong id="live-pauses">0</strong></span>
+              </div>
+            </div>
+
+            <!-- svg motherboard -->
+            <div class="motherboard-viewport">
+              <svg id="motherboard-svg" class="motherboard-svg" viewBox="0 0 760 544">
+                <defs>
+                  <linearGradient id="case-metal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#111827" />
+                    <stop offset="100%" stop-color="#090d16" />
+                  </linearGradient>
+
+                  <linearGradient id="mobo-pcb" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#0b192c" />
+                    <stop offset="50%" stop-color="#081221" />
+                    <stop offset="100%" stop-color="#0d1f38" />
+                  </linearGradient>
+
+                  <linearGradient id="vrm-heatsink" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#334155" />
+                    <stop offset="50%" stop-color="#475569" />
+                    <stop offset="100%" stop-color="#1e293b" />
+                  </linearGradient>
+
+                  <linearGradient id="cpu-ihs-grad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#e2e8f0" />
+                    <stop offset="50%" stop-color="#94a3b8" />
+                    <stop offset="100%" stop-color="#cbd5e1" />
+                  </linearGradient>
+
+                  <linearGradient id="cooler-fins" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#334155" />
+                    <stop offset="50%" stop-color="#1e293b" />
+                    <stop offset="100%" stop-color="#0f172a" />
+                  </linearGradient>
+
+                  <pattern id="socket-pins" width="6" height="6" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="1" fill="#eab308" opacity="0.55" />
+                  </pattern>
+                </defs>
+
+                <!-- case -->
+                <rect x="12" y="12" width="736" height="520" rx="12" fill="url(#case-metal)" stroke="#334155" stroke-width="3" />
+                <rect x="14" y="14" width="126" height="516" rx="10" fill="#0b101d" />
+                <line x1="140" y1="12" x2="140" y2="532" stroke="#64748b" stroke-width="3" />
+
+                <!-- rear I/O + Ground -->
+                <g>
+                  <rect x="18" y="28" width="116" height="236" rx="4" fill="#161f30" stroke="#64748b" stroke-width="2" />
+
+                    <g class="pc-part" data-component-id="esd_ground">
+                      <rect class="part-hitbox" x="18" y="28" width="116" height="60" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="1.5" />
+                      <circle id="svg-esd-circle" cx="44" cy="58" r="12" fill="#eab308" stroke="#fef08a" stroke-width="2" />
+                      <text x="66" y="62" fill="#f8fafc" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700">
+                        Ground
+                      </text>
+                    </g>
+
+                  <rect x="28" y="98" width="38" height="14" rx="1" fill="#090d16" stroke="#38bdf8" stroke-width="1.2" />
+                  <rect x="74" y="98" width="38" height="14" rx="1" fill="#090d16" stroke="#38bdf8" stroke-width="1.2" />
+                  <rect x="28" y="120" width="38" height="14" rx="1" fill="#090d16" stroke="#94a3b8" stroke-width="1.2" />
+                  <rect x="74" y="120" width="38" height="14" rx="1" fill="#090d16" stroke="#94a3b8" stroke-width="1.2" />
+                  <rect x="28" y="144" width="34" height="22" rx="2" fill="#090d16" stroke="#eab308" stroke-width="1.2" />
+                  <rect x="72" y="146" width="40" height="18" rx="1" fill="#090d16" stroke="#64748b" stroke-width="1.2" />
+                  <rect x="30" y="178" width="26" height="10" rx="4" fill="#090d16" stroke="#94a3b8" stroke-width="1.2" />
+                  <circle cx="78" cy="183" r="6" fill="#10b981" stroke="#090d16" stroke-width="1.5" />
+                  <circle cx="96" cy="183" r="6" fill="#ec4899" stroke="#090d16" stroke-width="1.5" />
+                  <circle cx="114" cy="183" r="6" fill="#38bdf8" stroke="#090d16" stroke-width="1.5" />
+                  <g stroke="#334155" stroke-width="2">
+                    <line x1="28" y1="208" x2="122" y2="208" />
+                    <line x1="28" y1="220" x2="122" y2="220" />
+                    <line x1="28" y1="232" x2="122" y2="232" />
+                    <line x1="28" y1="244" x2="122" y2="244" />
+                  </g>
+                </g>
+
+
+                <!-- mobo -->
+                <rect x="176" y="28" width="556" height="394" rx="8" fill="url(#mobo-pcb)" stroke="#293f75" stroke-width="2" />
+                <g fill="#64748b" stroke="#0f172a" stroke-width="1">
+                  <circle cx="190" cy="42" r="4" />
+                  <circle cx="718" cy="42" r="4" />
+                  <circle cx="190" cy="408" r="4" />
+                  <circle cx="718" cy="408" r="4" />
+                </g>
+
+                <g stroke="#1e3a6d" stroke-width="1.5" fill="none">
+                  <path d="M 434 205 H 545" />
+                  <path d="M 434 212 H 545" />
+                  <path d="M 434 219 H 545" />
+                  <path d="M 434 250 H 545" />
+                  <path d="M 434 257 H 545" />
+                  <path d="M 340 303 V 352" />
+                  <path d="M 348 303 V 352" />
+                  <path d="M 356 303 V 352" />
+                </g>
+
+                <!-- I/O block aligned to rear I/O height (y=90..264) -->
+                <rect x="196" y="90" width="36" height="174" rx="4" fill="url(#vrm-heatsink)" stroke="#475569" />
+                <line x1="204" y1="98" x2="204" y2="256" stroke="#1e293b" stroke-width="2" />
+                <line x1="214" y1="98" x2="214" y2="256" stroke="#1e293b" stroke-width="2" />
+                <line x1="224" y1="98" x2="224" y2="256" stroke="#1e293b" stroke-width="2" />
+                <g fill="#334155" stroke="#64748b" stroke-width="1">
+                  <rect x="236" y="100" width="10" height="16" rx="1" />
+                  <rect x="236" y="126" width="10" height="16" rx="1" />
+                  <rect x="236" y="152" width="10" height="16" rx="1" />
+                  <rect x="236" y="178" width="10" height="16" rx="1" />
+                  <rect x="236" y="204" width="10" height="16" rx="1" />
+                  <rect x="236" y="230" width="10" height="16" rx="1" />
+                </g>
+                <rect x="275" y="84" width="145" height="32" rx="4" fill="url(#vrm-heatsink)" stroke="#475569" />
+                <rect x="688" y="155" width="26" height="130" rx="3" fill="#0f172a" stroke="#64748b" stroke-width="1.5" />
+                <text x="678" y="224" fill="#64748b" font-family="Consolas, monospace" font-size="8.5" transform="rotate(-90, 678, 224)" text-anchor="middle">
+                  24-pin
+                </text>
+                <circle cx="228" cy="326" r="14" fill="#cbd5e1" stroke="#64748b" stroke-width="2" />
+                <text x="228" y="329" text-anchor="middle" fill="#0f172a" font-family="Consolas, monospace" font-size="7" font-weight="700">
+                  CMOS
+                </text>
+
+                <!-- psu bay divider & cable -->
+                <line x1="140" y1="430" x2="746" y2="430" stroke="#334155" stroke-width="2" stroke-dasharray="6 4" />
+                <rect x="142" y="438" width="115" height="82" rx="4" fill="#162033" stroke="#334155" stroke-width="2" />
+                <text x="585" y="482" fill="#475569" font-family="Consolas, monospace" font-size="11">
+                  PSU Bay
+                </text>
+                <path d="M 257 478 H 310 V 422" stroke="#1e3a6d" stroke-width="3" fill="none" />
+
+                <!-- power supply back panel -->
+                <g class="pc-part" data-component-id="psu_plug">
+                  <rect class="part-hitbox" x="18" y="438" width="116" height="82" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="2" />
+                  <text x="32" y="460" fill="#cbd5e1" font-family="Consolas, monospace" font-size="11" font-weight="700">
+                    PSU
+                  </text>
+                  <rect x="68" y="458" width="52" height="40" rx="5" fill="#090d16" stroke="#94a3b8" stroke-width="2" />
+                  <rect id="svg-psu-rocker" x="76" y="464" width="36" height="28" rx="4" fill="#ef4444" stroke="#fca5a5" stroke-width="1.5" />
+                </g>
+
+                <!-- cpu fan cable header (no outline box, straight blue cable) -->
+                <g class="pc-part" data-component-id="fan_header">
+                  <rect x="430" y="54" width="142" height="90" fill="none" pointer-events="all" />
+                  <rect class="part-hitbox" x="432" y="60" width="44" height="16" rx="2" fill="#e2e8f0" stroke="#94a3b8" />
+                  <circle cx="440" cy="68" r="2.2" fill="#ca8a04" />
+                  <circle cx="449" cy="68" r="2.2" fill="#ca8a04" />
+                  <circle cx="458" cy="68" r="2.2" fill="#ca8a04" />
+                  <circle cx="467" cy="68" r="2.2" fill="#ca8a04" />
+                  <line id="svg-fan-wire" x1="454" y1="145" x2="454" y2="76" stroke="#1e3a6d" stroke-width="3" />
+                  <text x="482" y="72" fill="#f8fafc" font-family="Consolas, monospace" font-size="10" font-weight="600">
+                    CPU_FAN
+                  </text>
+                </g>
+
+                <!-- cpu socket -->
+                <g class="pc-part" data-component-id="cpu_socket">
+                  <rect class="part-hitbox" x="292" y="168" width="142" height="135" rx="6" fill="#334155" stroke="#94a3b8" stroke-width="2" />
+                  <rect x="304" y="180" width="118" height="111" rx="3" fill="url(#socket-pins)" stroke="#475569" />
+                  <g id="svg-installed-cpu-group">
+                    <rect x="308" y="184" width="110" height="103" rx="4" fill="#0f5132" stroke="#10b981" stroke-width="1.5" />
+                    <rect id="svg-cpu-chip-rect" x="318" y="194" width="90" height="83" rx="5" fill="url(#cpu-ihs-grad)" stroke="#475569" stroke-width="2" />
+                    <polygon points="312,283 324,283 312,271" fill="#eab308" />
+                  </g>
+                  <circle id="svg-old-paste-smudge" cx="363" cy="235" r="21" fill="#64748b" stroke="#475569" stroke-width="2" stroke-dasharray="4 2" opacity="0" />
+                  <circle id="svg-thermal-paste-dot" cx="363" cy="235" r="11" fill="#94a3b8" stroke="#38bdf8" stroke-width="1.5" opacity="0" />
+                  <text x="363" y="239" text-anchor="middle" fill="#0f172a" font-family="Consolas, monospace" font-size="11" font-weight="700" id="svg-socket-label">
+                    OLD CPU
+                  </text>
+                </g>
+
+                <!-- socket retention lever -->
+                <g class="pc-part" data-component-id="socket_lever">
+                  <rect class="part-hitbox" x="468" y="170" width="48" height="135" rx="6" fill="#16243d" stroke="#94a3b8" stroke-width="2" />
+                  <path id="svg-lever-bar" d="M 476 292 H 492 V 184 L 502 178" fill="none" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                  <circle cx="492" cy="245" r="5" fill="#64748b" />
+                  <text x="492" y="162" text-anchor="middle" fill="#cbd5e1" font-family="Consolas, monospace" font-size="10" id="svg-lever-state">
+                    LOCKED
+                  </text>
+                </g>
+
+                <!-- cpu cooler -->
+                <g id="svg-cooler-group" class="pc-part" data-component-id="cpu_cooler">
+                  <rect class="part-hitbox" x="268" y="145" width="190" height="180" rx="10" fill="url(#cooler-fins)" stroke="#94a3b8" stroke-width="2.5" />
+                  <g stroke="#334155" stroke-width="1.5">
+                    <line x1="276" y1="175" x2="450" y2="175" />
+                    <line x1="276" y1="190" x2="450" y2="190" />
+                    <line x1="276" y1="205" x2="450" y2="205" />
+                    <line x1="276" y1="265" x2="450" y2="265" />
+                    <line x1="276" y1="280" x2="450" y2="280" />
+                    <line x1="276" y1="295" x2="450" y2="295" />
+                  </g>
+                  <g fill="#d97706" stroke="#fef08a" stroke-width="1">
+                    <circle cx="325" cy="153" r="4.5" />
+                    <circle cx="348" cy="153" r="4.5" />
+                    <circle cx="378" cy="153" r="4.5" />
+                    <circle cx="401" cy="153" r="4.5" />
+                    <circle cx="325" cy="317" r="4.5" />
+                    <circle cx="348" cy="317" r="4.5" />
+                    <circle cx="378" cy="317" r="4.5" />
+                    <circle cx="401" cy="317" r="4.5" />
+                  </g>
+                  <g fill="#e2e8f0" stroke="#475569" stroke-width="1.5">
+                    <circle cx="284" cy="161" r="7" />
+                    <circle cx="442" cy="161" r="7" />
+                    <circle cx="284" cy="309" r="7" />
+                    <circle cx="442" cy="309" r="7" />
+                  </g>
+                  <g stroke="#0f172a" stroke-width="1.5">
+                    <line x1="280" y1="161" x2="288" y2="161" />
+                    <line x1="284" y1="157" x2="284" y2="165" />
+                    <line x1="438" y1="161" x2="446" y2="161" />
+                    <line x1="442" y1="157" x2="442" y2="165" />
+                    <line x1="280" y1="309" x2="288" y2="309" />
+                    <line x1="284" y1="305" x2="284" y2="313" />
+                    <line x1="438" y1="309" x2="446" y2="309" />
+                    <line x1="442" y1="305" x2="442" y2="313" />
+                  </g>
+                  <circle cx="363" cy="235" r="64" fill="#090d16" stroke="#64748b" stroke-width="2.5" />
+                  <g stroke="#1e293b" stroke-width="5" stroke-linecap="round">
+                    <line x1="363" y1="176" x2="380" y2="215" />
+                    <line x1="418" y1="205" x2="380" y2="230" />
+                    <line x1="418" y1="265" x2="378" y2="245" />
+                    <line x1="363" y1="294" x2="348" y2="255" />
+                    <line x1="308" y1="265" x2="345" y2="240" />
+                    <line x1="308" y1="205" x2="348" y2="225" />
+                  </g>
+                  <circle cx="363" cy="235" r="38" fill="#111827" stroke="#38bdf8" stroke-width="1.5" />
+                  <text x="363" y="239" text-anchor="middle" fill="#f8fafc" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700">
+                    CPU Fan
+                  </text>
+                </g>
+
+                <!-- ram sticks -->
+                <g class="pc-part" data-component-id="ram_slots">
+                  <rect class="part-hitbox" x="545" y="135" width="90" height="210" rx="6" fill="#111d36" stroke="#64748b" stroke-width="2" />
+                  <rect x="555" y="146" width="12" height="188" rx="1" fill="#1e293b" stroke="#475569" />
+                  <rect x="573" y="146" width="12" height="188" rx="1" fill="#0284c7" stroke="#38bdf8" />
+                  <rect x="591" y="146" width="12" height="188" rx="1" fill="#1e293b" stroke="#475569" />
+                  <rect x="609" y="146" width="12" height="188" rx="1" fill="#0284c7" stroke="#38bdf8" />
+                  <g fill="#cbd5e1">
+                    <rect x="554" y="140" width="14" height="5" rx="1" />
+                    <rect x="572" y="140" width="14" height="5" rx="1" />
+                    <rect x="590" y="140" width="14" height="5" rx="1" />
+                    <rect x="608" y="140" width="14" height="5" rx="1" />
+                    <rect x="554" y="335" width="14" height="5" rx="1" />
+                    <rect x="572" y="335" width="14" height="5" rx="1" />
+                    <rect x="590" y="335" width="14" height="5" rx="1" />
+                    <rect x="608" y="335" width="14" height="5" rx="1" />
+                  </g>
+                  <text x="590" y="126" text-anchor="middle" fill="#cbd5e1" font-family="Consolas, monospace" font-size="10">
+                    RAM
+                  </text>
+                </g>
+
+                <!-- rear GPU bracket + connecting line (not part of hoverable GPU hitbox) -->
+                <g>
+                  <rect x="18" y="352" width="116" height="64" rx="3" fill="#334155" stroke="#64748b" stroke-width="2" />
+                  <rect x="28" y="364" width="32" height="12" rx="1" fill="#090d16" stroke="#94a3b8" stroke-width="1.2" />
+                  <rect x="68" y="364" width="24" height="12" rx="1" fill="#090d16" stroke="#94a3b8" stroke-width="1.2" />
+                  <rect x="100" y="364" width="24" height="12" rx="1" fill="#090d16" stroke="#94a3b8" stroke-width="1.2" />
+                  <g stroke="#1e293b" stroke-width="2">
+                    <line x1="28" y1="390" x2="124" y2="390" />
+                    <line x1="28" y1="400" x2="124" y2="400" />
+                  </g>
+                  <line x1="134" y1="384" x2="215" y2="384" stroke="#64748b" stroke-width="4" />
+                </g>
+
+                <!-- graphics card -->
+                <g class="pc-part" data-component-id="gpu_slot">
+                  <rect class="part-hitbox" x="215" y="352" width="340" height="64" rx="6" fill="#162238" stroke="#64748b" stroke-width="2" />
+                  <line x1="230" y1="360" x2="535" y2="360" stroke="#d97706" stroke-width="3" />
+                  <line x1="230" y1="366" x2="495" y2="366" stroke="#d97706" stroke-width="2.5" />
+                  <rect x="510" y="371" width="32" height="14" rx="2" fill="#090d16" stroke="#94a3b8" />
+                  <g stroke="#334155" stroke-width="2">
+                    <line x1="440" y1="376" x2="455" y2="408" />
+                    <line x1="452" y1="376" x2="467" y2="408" />
+                    <line x1="464" y1="376" x2="479" y2="408" />
+                    <line x1="476" y1="376" x2="491" y2="408" />
+                  </g>
+                  <text x="335" y="393" text-anchor="middle" fill="#e2e8f0" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700">
+                    RTX 2060
+                  </text>
+                </g>
+
+                <!-- AR highlight box -->
+                <g id="ar-overlay-group">
+                  <rect id="ar-highlight-rect" class="ar-highlight-box" x="12" y="432" width="128" height="94" rx="8" />
+                </g>
+              </svg>
+            </div>
+            <div id="action-feedback" class="feedback-banner">
+              Pick a tool and click a part
+            </div>
+          </div>
+
+          <!-- right sidebar -->
+          <aside class="task-sidebar">
+            <div class="panel-card">
+              <div class="stage-header-bar" style="margin-bottom: 8px; padding-bottom: 8px;">
+                <h3 class="panel-heading" id="sidebar-task-title">Current Step</h3>
+                <button type="button" class="btn btn-secondary" id="pause-resume-btn">
+                  Pause
+                </button>
+              </div>
+
+              <div id="ar-step-panel">
+                <div id="subtasks-container" style="margin-top: 8px;">
+                  <span class="form-label">To do:</span>
+                  <ul class="subtask-list" id="current-step-subtasks"></ul>
+                </div>
+              </div>
+
+              <div id="written-manual-panel" style="display: none;">
+                <div class="manual-scroll-box" id="manual-full-text"></div>
+              </div>
+
+              <div class="step-nav-controls">
+                <button type="button" class="btn btn-secondary" id="step-back-btn">
+                  Back
+                </button>
+              </div>
+            </div>
+
+            <!-- coolant mini task -->
+            <div class="panel-card" id="secondary-task-card">
+              <h3 class="panel-heading">Coolant Pressure</h3>
+              <p class="panel-subtitle" style="margin-bottom: 6px;">
+                Keep pressure under <strong>65 PSI</strong>
+              </p>
+
+              <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                <span id="coolant-status-text">● OK (50 PSI)</span>
+              </div>
+
+              <div class="gauge-track">
+                <div id="coolant-gauge-fill" class="gauge-fill" style="width: 50%;"></div>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="stabilize-coolant-btn"
+                style="width: 100%; margin-top: 6px;"
+              >
+                Lower Pressure (Space)
+              </button>
+            </div>
+
+            <!-- inventory tray -->
+            <div class="panel-card" id="inventory-panel">
+              <div class="inventory-header-row">
+                <h3 class="panel-heading" style="margin-bottom: 0;">Inventory</h3>
+                <span id="active-tool-indicator" class="inventory-equipped-label tabular-nums">
+                  Equipped: Hand Tool
+                </span>
+              </div>
+              <p class="panel-subtitle" style="margin-bottom: 12px;">
+                Click a tool or part to equip it
+              </p>
+              <div class="inventory-grid" id="inventory-grid"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- done -->
+      <section id="complete-screen" class="screen">
+        <div class="complete-card">
+          <h1 id="complete-heading" class="complete-title">
+            Nice! You replaced the CPU!
+          </h1>
+          <p class="panel-subtitle" id="complete-subtext">
+            Your run is saved in your browser. You can also download the log below
+          </p>
+
+          <div class="log-summary-box tabular-nums">
+            <div class="log-row">
+              <span>Player &amp; Mode:</span>
+              <strong id="log-participant-cond">Player 1 · ar_overlay</strong>
+            </div>
+            <div class="log-row">
+              <span>Total Time:</span>
+              <strong id="log-total-time">0.0s</strong>
+            </div>
+            <div class="log-row">
+              <span>Errors:</span>
+              <strong id="log-total-errors">0</strong>
+            </div>
+            <div class="log-row">
+              <span>Pauses &amp; Hazards:</span>
+              <strong id="log-pauses-hazards">0 Pauses · 0 ms avg reaction</strong>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" id="back-to-main-btn">
+              Back to Main
+            </button>
+            <button type="button" class="btn btn-secondary" id="complete-download-csv-btn">
+              Download Log (.csv)
+            </button>
+            <button type="button" class="btn btn-secondary" id="complete-download-json-btn">
+              Download Log (.json)
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script defer src="./procedures.js"></script>
+    <script defer src="./metrics.js"></script>
+    <script defer src="./app.js"></script>
+  </body>
+</html>
