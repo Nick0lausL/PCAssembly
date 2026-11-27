@@ -13,6 +13,7 @@ let activeHazard = null;
 let coolantPsi = 50;
 
 let metricsSession = null;
+let sessionId = null;
 let lastFinalizedSummary = null;
 let savedRecords = [];
 let uiTimerId = null;
@@ -41,7 +42,7 @@ function bindEvents() {
   });
 
   document.getElementById('nav-sim-btn').addEventListener('click', function () {
-      if (!metricsSession) {
+      if (!sessionId) {
         startSimulation();
       } else {
         switchScreen('assembly');
@@ -58,13 +59,13 @@ function bindEvents() {
   });
 
   document.getElementById('top-export-csv-btn').addEventListener('click', function () {
-    downloadMetricsFile(savedRecords, 'csv');
+    window.location.href = '/api/results/csv';
   });
   document.getElementById('complete-download-csv-btn').addEventListener('click', function () {
-    downloadMetricsFile(savedRecords, 'csv');
+    window.location.href = '/api/results/csv';
   });
   document.getElementById('complete-download-json-btn').addEventListener('click', function () {
-    downloadMetricsFile(savedRecords, 'json');
+    window.location.href = '/api/results/json';
   });
 
   let modeButtons = document.querySelectorAll('[data-mode]');
@@ -164,19 +165,21 @@ function resetStartForm() {
   updateStartScreenSummary();
 }
 
-function startSimulation() {
-  currentStepIndex = 0;
+async function startSimulation() {
   selectedToolId = 'hand';
   isPaused = false;
   activeHazard = null;
   coolantPsi = 50;
 
-  metricsSession = createMetricsSession({
-    participantId: participantId,
-    condition: condition,
-    cpuModel: cpuModel,
-    totalSteps: CPU_REPLACEMENT_STEPS.length
+  const res = await fetch('/api/session/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ participantId, condition, cpuModel })
   });
+  const state = await res.json();
+
+  sessionId = state.sessionId;
+  currentStepIndex = state.currentStepIndex;
 
   let secCard = document.getElementById('secondary-task-card');
   secCard.style.display = enableSecondaryTask ? 'block' : 'none';
@@ -186,6 +189,7 @@ function startSimulation() {
   document.getElementById('written-manual-panel').style.display = isManualOnly ? 'block' : 'none';
 
   switchScreen('assembly');
+  syncHeaderFromState(state);
   renderCurrentStep();
   renderSecondaryTaskGauge();
   updateFeedbackBanner('Pick a tool and click a part', 'neutral');
@@ -445,69 +449,50 @@ function renderFullWrittenManual() {
   }).join('');
 }
 
-function handleComponentInteraction(clickedComponentId) {
-  let currentStep = CPU_REPLACEMENT_STEPS[currentStepIndex];
-  if (!currentStep || !metricsSession) return;
+async function handleComponentInteraction(clickedComponentId) {
+  if (!sessionId) return;
 
-  let validation = validateStepAction(
-    currentStep,
-    clickedComponentId,
-    selectedToolId,
-    isPaused,
-    activeHazard
-  );
+  const res = await fetch(`/api/session/${sessionId}/action`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      componentId: clickedComponentId,
+      toolId: selectedToolId
+    })
+  });
+  const result = await res.json();
 
-  if (!validation.valid) {
-    if (validation.errorType !== 'paused_interaction') {
-      recordError(
-        metricsSession,
-        currentStep.stepNumber,
-        validation.errorType || 'unknown_error',
-        validation.message
-      );
-      updateLiveMetricsHeader();
-    }
-    // TODO: error sound
-    updateFeedbackBanner(validation.message, 'error');
+  syncHeaderFromState(result.state);
+
+  if (!result.valid) {
+    updateFeedbackBanner(result.message, 'error');
     return;
   }
 
-  let elapsedSec = recordStepCompletion(
-    metricsSession,
-    currentStep.stepNumber,
-    currentStep.title
-  );
+  updateFeedbackBanner(result.message, 'success');
 
-  let inventoryNote = '';
-  if (currentStep.stepNumber === 4) {
-    inventoryNote = 'Cooler moved to inventory';
-  } else if (currentStep.stepNumber === 7) {
-    inventoryNote = 'Old CPU moved to inventory.';
-  } else if (currentStep.stepNumber === 8) {
-    inventoryNote = 'New CPU put in';
-  } else if (currentStep.stepNumber === 11) {
-    inventoryNote = 'Cooler placed back';
-  } else if (currentStep.stepNumber === 12) {
-    inventoryNote = 'Screws tightened';
-  }
-
-  updateFeedbackBanner(validation.message + inventoryNote, 'success');
-
-  if (currentStepIndex < CPU_REPLACEMENT_STEPS.length - 1) {
-    currentStepIndex += 1;
-    renderCurrentStep();
+  if (result.completed && result.summary) {
+    stopSimulationTimers();
+    lastFinalizedSummary = result.summary;
+    renderCompleteScreen(result.summary);
+    switchScreen('complete');
   } else {
-    finishSimulation();
+    currentStepIndex = result.state.currentStepIndex;
+    renderCurrentStep();
   }
 }
 
-function goToPreviousStep() {
-    if (currentStepIndex > 0) {
-      currentStepIndex -= 1;
-      activeHazard = null;
-      renderCurrentStep();
-      updateFeedbackBanner('Went back to Step ' + (currentStepIndex + 1), 'neutral');
-    }
+async function goToPreviousStep() {
+  if (!sessionId || currentStepIndex === 0) return;
+
+  const res = await fetch(`/api/session/${sessionId}/back`, { method: 'POST' });
+  const data = await res.json();
+
+  currentStepIndex = data.state.currentStepIndex;
+  activeHazard = null;
+  syncHeaderFromState(data.state);
+  renderCurrentStep();
+  updateFeedbackBanner(data.message, 'neutral');
 }
 
 function updateFeedbackBanner(message, statusType) {
@@ -542,54 +527,29 @@ function hideHazardBanner() {
   document.getElementById('hazard-banner').classList.remove('visible');
 }
 
-function acknowledgeHazard() {
-  if (!activeHazard || !metricsSession) return;
+async function acknowledgeHazard() {
+  if (!activeHazard || !sessionId) return;
 
-  let reactionMs = Date.now() - activeHazard.shownAtMs;
-  let currentStep = CPU_REPLACEMENT_STEPS[currentStepIndex];
-
-  recordHazardResponse(
-    metricsSession,
-    activeHazard.id,
-    currentStep ? currentStep.stepNumber : 1,
-    reactionMs,
-    true
-  );
+  const res = await fetch(`/api/session/${sessionId}/hazard`, { method: 'POST' });
+  const data = await res.json();
 
   activeHazard.acknowledged = true;
   hideHazardBanner();
-
-  metricsSession.pauseCount += 1;
-  updateLiveMetricsHeader();
-  updateFeedbackBanner('Ok, safe to continue', 'success');
+  syncHeaderFromState(data.state);
+  updateFeedbackBanner(data.message, 'success');
 }
 
-function togglePause() {
-    if (!metricsSession) return;
+async function togglePause() {
+  if (!sessionId) return;
 
-    isPaused = !isPaused;
-    let pauseBtn = document.getElementById('pause-resume-btn');
-    let statusLabel = document.getElementById('sim-status-label');
+  const res = await fetch(`/api/session/${sessionId}/pause`, { method: 'POST' });
+  const data = await res.json();
 
-    if (isPaused) {
-      metricsSession.pauseCount += 1;
-      metricsSession.pauseStartMs = Date.now();
-      pauseBtn.textContent = 'Resume';
-      statusLabel.textContent = '❚❚ PAUSED';
-      updateFeedbackBanner('Paused. Timer stopped until you click Resume', 'warning');
-    } else {
-      if (metricsSession.pauseStartMs) {
-        let pausedDelta = Date.now() - metricsSession.pauseStartMs;
-        metricsSession.totalPausedMs += pausedDelta;
-        metricsSession.stepStartTimeMs += pausedDelta;
-        metricsSession.pauseStartMs = null;
-      }
-      pauseBtn.textContent = 'Pause';
-      statusLabel.textContent = '● ACTIVE';
-      updateFeedbackBanner('Resumed.', 'neutral');
-    }
-
-    updateLiveMetricsHeader();
+  isPaused = data.isPaused;
+  document.getElementById('pause-resume-btn').textContent = isPaused ? 'Resume' : 'Pause';
+  document.getElementById('sim-status-label').textContent = isPaused ? '❚❚ PAUSED' : '● ACTIVE';
+  syncHeaderFromState(data.state);
+  updateFeedbackBanner(data.message, isPaused ? 'warning' : 'neutral');
 }
 
 
@@ -599,13 +559,13 @@ function startSimulationTimers() {
   stopSimulationTimers();
 
   uiTimerId = setInterval(function () {
-    if (isPaused || !metricsSession) return;
+    if (isPaused || !sessionId) return;
     updateLiveMetricsHeader();
   }, 200);
 
   // coolant psi rises, game over at 100
   secondaryTimerId = setInterval(function () {
-    if (isPaused || !metricsSession || !enableSecondaryTask) return;
+    if (isPaused || !sessionId || !enableSecondaryTask) return;
 
     coolantPsi = Math.min(100, coolantPsi + 4);
     renderSecondaryTaskGauge();
@@ -628,7 +588,7 @@ function stopSimulationTimers() {
 }
 
 function stabilizeCoolant() {
-  if (isPaused || !metricsSession) return;
+  if (isPaused || !sessionId) return;
   coolantPsi = 45;
   renderSecondaryTaskGauge();
 }
@@ -651,25 +611,34 @@ function renderSecondaryTaskGauge() {
     }
   }
 }
-
-function updateLiveMetricsHeader() {
-  if (!metricsSession) return;
-  let elapsedMs = Math.max(0, Date.now() - metricsSession.startTimeMs - metricsSession.totalPausedMs);
-  document.getElementById('live-timer').textContent = (elapsedMs / 1000).toFixed(1) + 's';
-  document.getElementById('live-errors').textContent = metricsSession.errors.length;
-  document.getElementById('live-pauses').textContent = metricsSession.pauseCount;
+function syncHeaderFromState(state) {
+  if (!state) return;
+  document.getElementById('live-timer').textContent = state.elapsedSec.toFixed(1) + 's';
+  document.getElementById('live-errors').textContent = state.errorCount;
+  document.getElementById('live-pauses').textContent = state.pauseCount;
 }
 
-function finishSimulation(overheated) {
+async function updateLiveMetricsHeader() {
+  if (!sessionId || isPaused) return;
+  const res = await fetch(`/api/session/${sessionId}/status`);
+  if (res.ok) {
+    const state = await res.json();
+    syncHeaderFromState(state);
+  }
+}
+
+async function finishSimulation(overheated) {
   stopSimulationTimers();
-  if (!metricsSession) return;
+  if (!sessionId) return;
 
-  let summary = finalizeMetricsSummary(metricsSession);
-  summary.overheated = Boolean(overheated);
+  const res = await fetch(`/api/session/${sessionId}/finish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ overheated: Boolean(overheated) })
+  });
+  const summary = await res.json();
+
   lastFinalizedSummary = summary;
-
-  savedRecords = saveMetricsRecord(summary);
-
   renderCompleteScreen(summary);
   switchScreen('complete');
 }
